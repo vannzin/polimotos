@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>POLIMOTOS | Painel de Controle</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/png" href="assets/logo-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script>window.IS_ADMIN_PANEL = true;</script>
+  <script src="assets/js/cms.js"></script>
+  <style>
+    :root {
+      --bg: #09090b;
+      --panel: #121216;
+      --panel-card: #18181d;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-focus: #b8262d;
+      --red: #9c1c22;
+      --red-2: #b8262d;
+      --red-light: #e0313a;
+      --text: #f0f0f3;
+      --muted: #95959e;
+      --green: #35d46b;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Tela de Login / Autenticação Local */
+    #pin-screen {
+      position: fixed; inset: 0; z-index: 999;
+      background: rgba(8, 8, 10, 0.96);
+      backdrop-filter: blur(12px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .pin-box {
+      width: 100%; max-width: 420px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px 32px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+      text-align: center;
+    }
+    .pin-box h2 {
+      font-size: 1.5rem; margin-bottom: 8px; color: #fff;
+    }
+    .pin-box p {
+      color: var(--muted); font-size: 0.9rem; margin-bottom: 24px;
+    }
+    .login-field {
+      text-align: left; margin-bottom: 16px;
+    }
+    .login-field label {
+      display: block; font-size: 0.78rem; font-weight: 700; color: #b5b5ba;
+      margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .login-field input {
+      width: 100%; padding: 13px 16px;
+      background: #09090b; border: 1px solid var(--border);
+      border-radius: 12px; color: #fff; font-size: 1rem;
+      outline: none; transition: border-color 0.2s;
+    }
+    .login-field input:focus { border-color: var(--red-2); }
+    .btn-unlock {
+      width: 100%; padding: 14px; margin-top: 8px;
+      background: var(--red-2); border: none; border-radius: 12px;
+      color: #fff; font-weight: 700; font-size: 1rem;
+      cursor: pointer; transition: background 0.2s, transform 0.1s;
+    }
+    .btn-unlock:hover { background: var(--red-light); }
+    .btn-unlock:active { transform: scale(0.98); }
+    .pin-error {
+      color: #ff4d4f; font-size: 0.85rem; margin-top: 14px; display: none;
+    }
+
+    /* Layout Principal */
+    #admin-app { display: none; flex: 1; flex-direction: column; }
+    header.admin-header {
+      background: #0e0e12;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 50;
+      padding: 14px 24px;
+    }
+    .header-inner {
+      max-width: 1300px; margin: auto;
+      display: flex; justify-content: space-between; align-items: center; gap: 16px;
+      flex-wrap: wrap;
+    }
+    .brand-title {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .brand-title img { width: 32px; height: 32px; object-fit: contain; }
+    .brand-title h1 {
+      font-size: 1.15rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .brand-title span {
+      background: rgba(184,38,45,0.15); color: #e05b63;
+      padding: 3px 9px; border-radius: 6px; font-size: 0.72rem; font-weight: 700;
+      border: 1px solid rgba(184,38,45,0.3);
+    }
+
+    .header-actions {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .btn-action {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 10px 18px; border-radius: 10px; font-size: 0.88rem; font-weight: 600;
+      cursor: pointer; border: 1px solid transparent; text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-secondary {
+      background: rgba(255,255,255,0.06); color: #ddd;
+      border-color: var(--border);
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.12); color: #fff; }
+    .btn-primary {
+      background: var(--red-2); color: #fff;
+      box-shadow: 0 4px 14px rgba(184,38,45,0.35);
+    }
+    .btn-primary:hover { background: var(--red-light); transform: translateY(-1px); }
+
+    /* Estrutura Sidebar + Content */
+    .admin-main {
+      max-width: 1300px; width: 100%; margin: auto;
+      padding: 24px; display: grid; grid-template-columns: 260px 1fr;
+      gap: 28px; flex: 1;
+    }
+    .admin-sidebar {
+      display: flex; flex-direction: column; gap: 6px;
+      position: sticky; top: 85px; height: fit-content;
+    }
+    .nav-tab {
+      display: flex; align-items: center; gap: 11px;
+      padding: 12px 16px; border-radius: 10px;
+      color: var(--muted); background: transparent; border: none;
+      font-size: 0.92rem; font-weight: 500; cursor: pointer;
+      text-align: left; transition: all 0.2s; width: 100%;
+    }
+    .nav-tab:hover {
+      background: rgba(255,255,255,0.04); color: #fff;
+    }
+    .nav-tab.active {
+      background: rgba(184,38,45,0.14); color: #fff;
+      border: 1px solid rgba(184,38,45,0.3); font-weight: 700;
+    }
+    .nav-tab svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+    /* Painéis de Conteúdo */
+    .admin-content {
+      min-width: 0;
+    }
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.25s ease;
+    }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    .content-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px; margin-bottom: 24px;
+    }
+    .card-title {
+      font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 6px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card-subtitle {
+      color: var(--muted); font-size: 0.88rem; margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-label {
+      display: block; font-size: 0.85rem; font-weight: 600;
+      color: #cfcfd4; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .form-help {
+      font-size: 0.78rem; color: var(--muted); margin-top: 5px;
+    }
+    .form-input, .form-textarea {
+      width: 100%; padding: 12px 14px;
+      background: #09090c; border: 1px solid var(--border);
+      border-radius: 10px; color: #fff; font-size: 0.94rem;
+      font-family: inherit; outline: none; transition: border-color 0.2s;
+    }
+    .form-input:focus, .form-textarea:focus {
+      border-color: var(--border-focus);
+    }
+    .form-textarea { min-height: 85px; resize: vertical; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    /* Card de Serviço no Painel */
+    .service-module-box {
+      background: var(--panel-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px; margin-bottom: 20px;
+    }
+    .service-module-box:last-child { margin-bottom: 0; }
+    .module-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+    }
+    .module-badge {
+      background: rgba(184,38,45,0.15); color: #e05b63;
+      padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700;
+    }
+
+    /* Uploader de Imagem */
+    .image-uploader-box {
+      display: flex; gap: 16px; align-items: center;
+      margin-top: 10px; background: #0a0a0d; padding: 12px; border-radius: 10px;
+      border: 1px dashed var(--border);
+    }
+    .image-preview {
+      width: 110px; height: 75px; border-radius: 8px;
+      background: #15151a; border: 1px solid var(--border);
+      overflow: hidden; display: grid; place-items: center;
+      flex-shrink: 0; position: relative;
+    }
+    .image-preview img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .image-preview .placeholder {
+      font-size: 0.75rem; color: var(--muted); text-align: center; padding: 4px;
+    }
+    .image-controls {
+      display: flex; flex-direction: column; gap: 8px; flex: 1;
+    }
+    .file-btn {
+      display: inline-block; padding: 7px 14px; border-radius: 8px;
+      background: rgba(255,255,255,0.08); color: #fff; font-size: 0.82rem;
+      font-weight: 600; cursor: pointer; text-align: center;
+      border: 1px solid var(--border); width: fit-content;
+    }
+    .file-btn:hover { background: rgba(255,255,255,0.14); }
+    .btn-remove-img {
+      padding: 5px 10px; border-radius: 6px; background: transparent;
+      color: #ff6b72; border: 1px solid rgba(255,107,114,0.25); font-size: 0.75rem;
+      cursor: pointer; width: fit-content;
+    }
+    .btn-remove-img:hover { background: rgba(255,107,114,0.1); }
+
+    /* Toast de Sucesso */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 1000;
+      background: #1c2b20; border: 1px solid #35d46b; color: #a4f5be;
+      padding: 14px 22px; border-radius: 12px; font-weight: 600; font-size: 0.95rem;
+      display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+      opacity: 0; transform: translateY(15px); pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+    @media (max-width: 900px) {
+      .admin-main { grid-template-columns: 1fr; }
+      .admin-sidebar {
+        flex-direction: row; overflow-x: auto; position: static;
+        padding-bottom: 8px;
+      }
+      .nav-tab { white-space: nowrap; width: auto; }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Tela de Bloqueio por Usuário e Senha -->
+  <div id="pin-screen">
+    <div class="pin-box">
+      <div style="margin-bottom:16px;">
+        <img src="assets/logo-icon.png" alt="Polimotos" style="width:52px;height:52px;margin:auto;" />
+      </div>
+      <h2>Painel Polimotos</h2>
+      <p>Acesse com seu usuário e senha administrativos</p>
+      <form id="pin-form" onsubmit="handleLoginSubmit(event)">
+        <div class="login-field">
+          <label for="login-user">Usuário</label>
+          <input type="text" id="login-user" placeholder="admin" autofocus autocomplete="username" />
+        </div>
+        <div class="login-field">
+          <label for="login-pass">Senha</label>
+          <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <button type="submit" class="btn-unlock">Entrar no Painel</button>
+        <div id="pin-error" class="pin-error">Usuário ou senha incorretos.</div>
+      </form>
+      <div style="margin-top:20px;font-size:0.75rem;color:#666;">
+        Acesso restrito salvo e autenticado apenas localmente.
+      </div>
+    </div>
+  </div>
+
+  <!-- Aplicação Administrativa -->
+  <div id="admin-app">
+    <header class="admin-header">
+      <div class="header-inner">
+        <div class="brand-title">
+          <img src="assets/logo-icon.png" alt="Polimotos Logo" />
+          <h1>Polimotos</h1>
+          <span>Painel Oculto</span>
+        </div>
+        <div class="header-actions">
+          <a href="index.html" target="_blank" class="btn-action btn-secondary" title="Abrir o site em nova aba">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+            Ver Site
+          </a>
+          <button type="button" class="btn-action btn-primary" onclick="saveAllChanges()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Salvar Alterações
+          </button>
+          <button type="button" class="btn-action btn-secondary" onclick="lockAdmin()" title="Bloquear painel">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Sair
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="admin-main">
+      <!-- Navegação Lateral por Setores -->
+      <aside class="admin-sidebar">
+        <button class="nav-tab active" onclick="switchTab('whatsapp')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          WhatsApp & Contatos
+        </button>
+        <button class="nav-tab" onclick="switchTab('hero')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          1ª Parte (Apresentação)
+        </button>
+        <button class="nav-tab" onclick="switchTab('services')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          Serviços (4 Módulos)
+        </button>
+        <button class="nav-tab" onclick="switchTab('about')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Quem Somos & Fachada
+        </button>
+        <button class="nav-tab" onclick="switchTab('telemetria')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Telemetria & Revisão
+        </button>
+        <button class="nav-tab" onclick="switchTab('cta')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Chamada Final (CTA)
+        </button>
+        <button class="nav-tab" onclick="switchTab('backup')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v10m0 0l-3-3m3 3l3-3M3 17v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2"/></svg>
+          Backup & Segurança
+        </button>
+      </aside>
+
+      <!-- Conteúdo dos Setores -->
+      <section class="admin-content">
+
+        <!-- ABA 1: WhatsApp & Contatos -->
+        <div id="tab-whatsapp" class="tab-content active">
+          <div class="content-card">
+            <h2 class="card-title">📱 WhatsApp & Atendimento</h2>
+            <p class="card-subtitle">Configure o número e a mensagem que o cliente enviará ao clicar em qualquer botão do site.</p>
+            
+            <div class="form-group">
+              <label class="form-label">Número do WhatsApp (com DDD)</label>
+              <input type="text" id="gen-whatsapp" class="form-input" placeholder="5531975280048" />
+              <div class="form-help">Formato recomendado: 55 + DDD + Número (apenas números). Atualiza todos os botões e o WhatsApp flutuante.</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Mensagem Padrão Pré-preenchida</label>
+              <textarea id="gen-message" class="form-textarea" placeholder="Olá, estão atendendo? Gostaria de saber mais sobre seus trabalhos."></textarea>
+              <div class="form-help">Essa é a mensagem que abre automaticamente no celular do cliente ao clicar no botão.</div>
+            </div>
+          </div>
+
+          <div class="content-card">
+            <h2 class="card-title">📍 Endereço e Horários da Oficina</h2>
+            <p class="card-subtitle">Exibido na seção de informações e no rodapé.</p>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Endereço (Linha 1)</label>
+                <input type="text" id="gen-addr1" class="form-input" placeholder="Rua Maria de São José, 100" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Bairro, Cidade e Estado (Linha 2)</label>
+                <input type="text" id="gen-addr2" class="form-input" placeholder="Arcádia, Contagem, MG" />
+              </div>
+            </div>
+
+            <div class="grid-2" style="margin-top:16px;">
+              <div class="form-group">
+                <label class="form-label">Horário de Segunda a Sexta</label>
+                <input type="text" id="gen-hours-week" class="form-input" placeholder="Segunda a sexta: 08h às 18h" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Horário de Sábado</label>
+                <input type="text" id="gen-hours-sat" class="form-input" placeholder="Sábado: 08h às 13h" />
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top:16px;">
+              <label class="form-label">Link de Rota no Google Maps</label>
+              <input type="text" id="gen-maps" class="form-input" placeholder="https://www.google.com/maps/..." />
+            </div>
+          </div>
+        </div>
+
+        <!-- ABA 2: Apresentação (Hero) -->
+        <div id="tab-hero" class="tab-content">
+          <div class="content-card">
+            <h2 class="card-title">🏍️ Primeira Parte (Hero / Apresentação)</h2>
+            <p class="card-subtitle">Edite o título de impacto, o texto de apresentação e a foto de fundo esportiva.</p>
+
+            <div class="form-group">
+              <label class="form-label">Título Principal (Texto Branco)</label>
+              <input type="text" id="hero-title1" class="form-input" placeholder="Sua moto em boas mãos." />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Título em Destaque (Texto em Vermelho)</label>
+              <input type="text" id="hero-title-highlight" class="form-input" placeholder="Cuide dela e siga seu caminho." />
+              <div class="form-help">Esta parte aparece estilizada na cor vermelha esportiva da Polimotos.</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Texto de Apoio / Subtítulo</label>
+              <textarea id="hero-sub" class="form-textarea" placeholder="Revisão e manutenção para você usar sua moto com segurança..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Foto de Fundo da 1ª Parte (Hero Background)</label>
+              <div class="image-uploader-box">
+                <div class="image-preview" id="preview-hero-bg">
+                  <img src="assets/hero-bg.png" id="img-hero-bg" alt="Hero Preview" />
+                </div>
+                <div class="image-controls">
+                  <label class="file-btn">
+                    Selecionar Nova Imagem
+                    <input type="file" accept="image/*" style="display:none" onchange="handleImageUpload(event, 'hero-bg')" />
+                  </label>
+                  <button type="button" class="btn-remove-img" onclick="restoreDefaultHeroImage()">Restaurar Foto Padrão (Ducati)</button>
+                  <div class="form-help">A imagem recebe automaticamente uma camada escura suave para garantir a leitura perfeita do título.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ABA 3: Serviços (4 Módulos) -->
+        <div id="tab-services" class="tab-content">
+          <div class="content-card">
+            <h2 class="card-title">🛠️ Cabeçalho da Seção de Serviços</h2>
+            <p class="card-subtitle">Textos que introduzem os 4 módulos da oficina.</p>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Tag Superior</label>
+                <input type="text" id="serv-tag" class="form-input" placeholder="Serviços" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Título (Parte 1)</label>
+                <input type="text" id="serv-title1" class="form-input" placeholder="Serviços para sua moto" />
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top:16px;">
+              <label class="form-label">Título em Destaque (Parte em Vermelho)</label>
+              <input type="text" id="serv-title-highlight" class="form-input" placeholder="seguir em frente." />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Subtítulo Geral de Serviços</label>
+              <textarea id="serv-sub" class="form-textarea" placeholder="A oficina atende manutenção preventiva e corretiva..."></textarea>
+            </div>
+          </div>
+
+          <!-- Card 1: Preventiva & Fluidos -->
+          <div class="service-module-box">
+            <div class="module-header">
+              <h3 style="font-size:1.1rem;color:#fff;">Módulo 01: Preventiva & Fluidos</h3>
+              <span class="module-badge">Card 1</span>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Tag da Categoria</label>
+                <input type="text" id="card0-tag" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Título do Serviço</label>
+                <input type="text" id="card0-title" class="form-input" />
+              </div>
+            </div>
+            <div class="form-group" style="margin-top:14px;">
+              <label class="form-label">O que o serviço entrega (Descrição)</label>
+              <textarea id="card0-desc" class="form-textarea"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Imagem de Fundo Deste Card (Opcional)</label>
+              <div class="image-uploader-box">
+                <div class="image-preview" id="preview-card0">
+                  <span class="placeholder">Sem foto</span>
+                </div>
+                <div class="image-controls">
+                  <label class="file-btn">
+                    Enviar Imagem de Fundo
+                    <input type="file" accept="image/*" style="display:none" onchange="handleImageUpload(event, 'card0')" />
+                  </label>
+                  <button type="button" class="btn-remove-img" onclick="removeCardImage(0)">Remover Imagem de Fundo</button>
+                  <div class="form-help">Coloque uma foto de revisão ou oficina. Ela terá gradiente protetor para manter o texto legível.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Motor & Transmissão -->
+          <div class="service-module-box">
+            <div class="module-header">
+              <h3 style="font-size:1.1rem;color:#fff;">Módulo 02: Motor & Transmissão</h3>
+              <span class="module-badge">Card 2</span>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Tag da Categoria</label>
+                <input type="text" id="card1-tag" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Título do Serviço</label>
+                <input type="text" id="card1-title" class="form-input" />
+              </div>
+            </div>
+            <div class="form-group" style="margin-top:14px;">
+              <label class="form-label">O que o serviço entrega (Descrição)</label>
+              <textarea id="card1-desc" class="form-textarea"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Imagem de Fundo Deste Card (Opcional)</label>
+              <div class="image-uploader-box">
+                <div class="image-preview" id="preview-card1">
+                  <span class="placeholder">Sem foto</span>
+                </div>
+                <div class="image-controls">
+                  <label class="file-btn">
+                    Enviar Imagem de Fundo
+                    <input type="file" accept="image/*" style="display:none" onchange="handleImageUpload(event, 'card1')" />
+                  </label>
+                  <button type="button" class="btn-remove-img" onclick="removeCardImage(1)">Remover Imagem de Fundo</button>
+                  <div class="form-help">Foto de motor aberto, relação ou engrenagens.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3: Freios & Rodas -->
+          <div class="service-module-box">
+            <div class="module-header">
+              <h3 style="font-size:1.1rem;color:#fff;">Módulo 03: Freios, Pneus & Ciclística</h3>
+              <span class="module-badge">Card 3</span>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Tag da Categoria</label>
+                <input type="text" id="card2-tag" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Título do Serviço</label>
+                <input type="text" id="card2-title" class="form-input" />
+              </div>
+            </div>
+            <div class="form-group" style="margin-top:14px;">
+              <label class="form-label">O que o serviço entrega (Descrição)</label>
+              <textarea id="card2-desc" class="form-textarea"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Imagem de Fundo Deste Card (Opcional)</label>
+              <div class="image-uploader-box">
+                <div class="image-preview" id="preview-card2">
+                  <span class="placeholder">Sem foto</span>
+                </div>
+                <div class="image-controls">
+                  <label class="file-btn">
+                    Enviar Imagem de Fundo
+                    <input type="file" accept="image/*" style="display:none" onchange="handleImageUpload(event, 'card2')" />
+                  </label>
+                  <button type="button" class="btn-remove-img" onclick="removeCardImage(2)">Remover Imagem de Fundo</button>
+                  <div class="form-help">Foto de freios a disco, pneus esportivos ou suspensão.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 4: Injeção & Elétrica -->
+          <div class="service-module-box">
+            <div class="module-header">
+              <h3 style="font-size:1.1rem;color:#fff;">Módulo 04: Injeção & Elétrica</h3>
+              <span class="module-badge">Card 4</span>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Tag da Categoria</label>
+                <input type="text" id="card3-tag" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Título do Serviço</label>
+                <input type="text" id="card3-title" class="form-input" />
+              </div>
+            </div>
+            <div class="form-group" style="margin-top:14px;">
+              <label class="form-label">O que o serviço entrega (Descrição)</label>
+              <textarea id="card3-desc" class="form-textarea"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Imagem de Fundo Deste Card (Opcional)</label>
+              <div class="image-uploader-box">
+                <div class="image-preview" id="preview-card3">
+                  <span class="placeholder">Sem foto</span>
+                </div>
+                <div class="image-controls">
+                  <label class="file-btn">
+                    Enviar Imagem de Fundo
+                    <input type="file" accept="image/*" style="display:none" onchange="handleImageUpload(event, 'card3')" />
+                  </label>
+                  <button type="button" class="btn-remove-img" onclick="removeCardImage(3)">Remover Imagem de Fundo</button>
+                  <div class="form-help">Foto de scanner de diagnóstico ou bateria/iluminação.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ABA 4: Quem Somos & Fachada -->
+        <div id="tab-about" class="tab-content">
+          <div class="content-card">
+            <h2 class="card-title">👥 Quem Somos & Imagem da Empresa</h2>
+            <p class="card-subtitle">Troque a foto de fachada/apresentação da empresa e gerencie os textos da história.</p>
+
+            <div class="form-group">
+              <label class="form-label">Foto de Fachada / Apresentação da Empresa</label>
+              <div class="image-uploader-box">
+                <div class="image-preview" style="width:140px;height:95px;" id="preview-about-img">
+                  <img src="assets/arte-sobre.png" id="img-about-src" alt="Sobre Preview" />
+                </div>
+                <div class="image-controls">
+                  <label class="file-btn">
+                    Enviar Nova Foto de Fachada
+                    <input type="file" accept="image/*" style="display:none" onchange="handleImageUpload(event, 'about-img')" />
+                  </label>
+                  <button type="button" class="btn-remove-img" onclick="restoreDefaultAboutImage()">Restaurar Arte Original</button>
+                  <div class="form-help">Envie uma foto da fachada da sua oficina em Contagem ou arte oficial da marca.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid-2" style="margin-top:20px;">
+              <div class="form-group">
+                <label class="form-label">Tag Superior</label>
+                <input type="text" id="about-tag" class="form-input" placeholder="Quem somos" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Título (Parte 1)</label>
+                <input type="text" id="about-title1" class="form-input" placeholder="Serviço bem feito." />
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top:16px;">
+              <label class="form-label">Título em Destaque (Vermelho)</label>
+              <input type="text" id="about-title-highlight" class="form-input" placeholder="Confiança para rodar." />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Texto da História / Apresentação</label>
+              <textarea id="about-desc" class="form-textarea" style="min-height:100px;"></textarea>
+            </div>
+
+            <div style="margin-top:24px;">
+              <label class="form-label">Os 4 Itens de Confiança (Checklist)</label>
+              <div class="grid-2">
+                <input type="text" id="check0" class="form-input" placeholder="Revisão completa" style="margin-bottom:10px;" />
+                <input type="text" id="check1" class="form-input" placeholder="Manutenção correta" style="margin-bottom:10px;" />
+                <input type="text" id="check2" class="form-input" placeholder="Atendimento direto" />
+                <input type="text" id="check3" class="form-input" placeholder="Confiança no serviço" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ABA 5: Telemetria & Revisão -->
+        <div id="tab-telemetria" class="tab-content">
+          <div class="content-card">
+            <h2 class="card-title">⚙️ Telemetria, Diagnóstico & Revisão</h2>
+            <p class="card-subtitle">Configurações da seção com a ilustração vetorial da moto.</p>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Tag Superior</label>
+                <input type="text" id="feat-tag" class="form-input" placeholder="Manutenção preventiva" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">RPM Exibido no Painel da Moto</label>
+                <input type="text" id="feat-rpm" class="form-input" placeholder="2.8k" />
+                <div class="form-help">Valor exibido no conta-giros digital (ex: 2.8k, 3.2k, 4.0k).</div>
+              </div>
+            </div>
+
+            <div class="grid-2" style="margin-top:16px;">
+              <div class="form-group">
+                <label class="form-label">Título (Parte 1)</label>
+                <input type="text" id="feat-title1" class="form-input" placeholder="Faça a revisão e" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Título em Destaque (Vermelho)</label>
+                <input type="text" id="feat-title-highlight" class="form-input" placeholder="rode com mais tranquilidade." />
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top:16px;">
+              <label class="form-label">Descrição da Revisão</label>
+              <textarea id="feat-desc" class="form-textarea"></textarea>
+            </div>
+
+            <div style="margin-top:20px;">
+              <label class="form-label">Os 3 Benefícios Destacados</label>
+              <input type="text" id="benefit0" class="form-input" style="margin-bottom:10px;" />
+              <input type="text" id="benefit1" class="form-input" style="margin-bottom:10px;" />
+              <input type="text" id="benefit2" class="form-input" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ABA 6: Chamada Final (CTA) -->
+        <div id="tab-cta" class="tab-content">
+          <div class="content-card">
+            <h2 class="card-title">📢 Banner Final de Agendamento</h2>
+            <p class="card-subtitle">Edite a chamada principal que antecede as informações de contato.</p>
+
+            <div class="form-group">
+              <label class="form-label">Tag Superior</label>
+              <input type="text" id="cta-tag" class="form-input" placeholder="Vai fazer a revisão da sua moto?" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Título Principal</label>
+              <input type="text" id="cta-title" class="form-input" placeholder="Fale com a Polimotos e peça seu orçamento." />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Texto de Apoio</label>
+              <textarea id="cta-desc" class="form-textarea" placeholder="Mande uma mensagem pelo WhatsApp..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Texto do Botão</label>
+              <input type="text" id="cta-btn" class="form-input" placeholder="Chamar no WhatsApp" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ABA 7: Backup & Segurança -->
+        <div id="tab-backup" class="tab-content">
+          <div class="content-card">
+            <h2 class="card-title">💾 Backup e Importação de Dados</h2>
+            <p class="card-subtitle">Exporte todas as suas alterações em um arquivo JSON para segurança ou importe para outro computador.</p>
+
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+              <button type="button" class="btn-action btn-secondary" onclick="exportDataJson()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                Baixar Arquivo de Backup (JSON)
+              </button>
+              <label class="btn-action btn-secondary" style="cursor:pointer;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                Restaurar do Arquivo (JSON)
+                <input type="file" accept=".json" style="display:none" onchange="importDataJson(event)" />
+              </label>
+              <button type="button" class="btn-action btn-secondary" style="color:#ff6b72;border-color:rgba(255,107,114,0.3);" onclick="confirmResetAll()">
+                Restaurar Todos os Padrões Originais
+              </button>
+            </div>
+          </div>
+
+          <div class="content-card">
+            <h2 class="card-title">🔒 Alterar Usuário e Senha de Acesso</h2>
+            <p class="card-subtitle">As credenciais ficam salvas exclusivamente na memória local do seu navegador (LocalStorage).</p>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label" for="setting-user">Usuário de Acesso</label>
+                <input type="text" id="setting-user" class="form-input" placeholder="admin" autocomplete="off" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="setting-pass">Nova Senha (Mínimo 4 caracteres)</label>
+                <input type="password" id="setting-pass" class="form-input" placeholder="Nova senha segura" autocomplete="new-password" />
+              </div>
+            </div>
+            <div class="form-group" style="margin-top:16px;">
+              <label class="form-label" for="setting-pass-confirm">Confirmar Nova Senha</label>
+              <input type="password" id="setting-pass-confirm" class="form-input" placeholder="Repita a nova senha" autocomplete="new-password" />
+            </div>
+            <button type="button" class="btn-action btn-secondary" onclick="updateCredentials()" style="margin-top:16px;">
+              Atualizar Usuário e Senha
+            </button>
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#35d46b" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+    <span id="toast-msg">Alterações salvas com sucesso!</span>
+  </div>
+
+  <script>
+    // Estado local em edição
+    let currentData = null;
+
+    // Autenticação Local por Usuário e Senha
+    function getStoredUser() {
+      return localStorage.getItem(USER_KEY) || DEFAULT_USER;
+    }
+
+    function getStoredPass() {
+      // Se houver PIN antigo salvo no navegador, faz fallback suave
+      return localStorage.getItem(PASS_KEY) || localStorage.getItem('polimotos_admin_pin') || DEFAULT_PASS;
+    }
+
+    function checkAuth() {
+      if (sessionStorage.getItem('polimotos_admin_logged') === 'true') {
+        unlockUI();
+      }
+    }
+
+    function handleLoginSubmit(e) {
+      e.preventDefault();
+      const userInput = document.getElementById('login-user').value.trim();
+      const passInput = document.getElementById('login-pass').value.trim();
+      
+      const actualUser = getStoredUser();
+      const actualPass = getStoredPass();
+
+      if (userInput.toLowerCase() === actualUser.toLowerCase() && passInput === actualPass) {
+        sessionStorage.setItem('polimotos_admin_logged', 'true');
+        unlockUI();
+      } else {
+        const err = document.getElementById('pin-error');
+        err.style.display = 'block';
+        setTimeout(() => { err.style.display = 'none'; }, 3500);
+      }
+    }
+
+    function unlockUI() {
+      document.getElementById('pin-screen').style.display = 'none';
+      document.getElementById('admin-app').style.display = 'flex';
+      initForm();
+    }
+
+    function lockAdmin() {
+      sessionStorage.removeItem('polimotos_admin_logged');
+      document.getElementById('admin-app').style.display = 'none';
+      document.getElementById('pin-screen').style.display = 'flex';
+      document.getElementById('login-pass').value = '';
+    }
+
+    function updateCredentials() {
+      const newUser = document.getElementById('setting-user').value.trim();
+      const newPass = document.getElementById('setting-pass').value.trim();
+      const confirmPass = document.getElementById('setting-pass-confirm').value.trim();
+
+      if (!newUser) {
+        alert('O nome de usuário não pode ficar em branco.');
+        return;
+      }
+      if (newPass.length < 4) {
+        alert('A senha deve conter pelo menos 4 caracteres.');
+        return;
+      }
+      if (newPass !== confirmPass) {
+        alert('A confirmação não confere com a nova senha.');
+        return;
+      }
+      if (newPass === DEFAULT_PASS && newUser.toLowerCase() === DEFAULT_USER) {
+        alert('Escolha uma senha diferente da senha padrão.');
+        return;
+      }
+
+      try {
+        localStorage.setItem(USER_KEY, newUser);
+        localStorage.setItem(PASS_KEY, newPass);
+        // Remove legado se houver
+        localStorage.removeItem('polimotos_admin_pin');
+
+        // Confere se realmente gravou
+        if (localStorage.getItem(PASS_KEY) !== newPass || localStorage.getItem(USER_KEY) !== newUser) {
+          throw new Error('verificação falhou');
+        }
+      } catch (e) {
+        alert('Não foi possível salvar a senha neste navegador. Verifique se o armazenamento local não está bloqueado (modo anônimo ou bloqueio de cookies/dados do site).');
+        return;
+      }
+
+      document.getElementById('login-user').value = newUser;
+      document.getElementById('setting-pass').value = '';
+      document.getElementById('setting-pass-confirm').value = '';
+      showToast('Usuário e senha atualizados! Use-os no próximo login neste navegador.');
+    }
+
+    // Gerenciamento de Abas
+    function switchTab(tabId) {
+      document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+      const targetBtn = Array.from(document.querySelectorAll('.nav-tab')).find(b => b.getAttribute('onclick')?.includes(tabId));
+      if (targetBtn) targetBtn.classList.add('active');
+
+      const content = document.getElementById('tab-' + tabId);
+      if (content) content.classList.add('active');
+    }
+
+    // Inicializa o formulário com os dados atuais
+    function initForm() {
+      currentData = getCmsData();
+
+      // WhatsApp & Contato
+      document.getElementById('gen-whatsapp').value = currentData.general.whatsappNumber || '';
+      document.getElementById('gen-message').value = currentData.general.whatsappMessage || '';
+      document.getElementById('gen-addr1').value = currentData.general.addressLine1 || '';
+      document.getElementById('gen-addr2').value = currentData.general.addressLine2 || '';
+      document.getElementById('gen-hours-week').value = currentData.general.hoursWeek || '';
+      document.getElementById('gen-hours-sat').value = currentData.general.hoursSaturday || '';
+      document.getElementById('gen-maps').value = currentData.general.mapsUrl || '';
+
+      // Hero
+      document.getElementById('hero-title1').value = currentData.hero.titlePart1 || '';
+      document.getElementById('hero-title-highlight').value = currentData.hero.titleHighlight || '';
+      document.getElementById('hero-sub').value = currentData.hero.subtitle || '';
+      updateImagePreview('hero-bg', currentData.hero.bgImage);
+
+      // Serviços
+      document.getElementById('serv-tag').value = currentData.services.sectionTag || '';
+      document.getElementById('serv-title1').value = currentData.services.titlePart1 || '';
+      document.getElementById('serv-title-highlight').value = currentData.services.titleHighlight || '';
+      document.getElementById('serv-sub').value = currentData.services.subtitle || '';
+
+      // 4 Cards
+      currentData.services.cards.forEach((card, i) => {
+        document.getElementById(`card${i}-tag`).value = card.tag || '';
+        document.getElementById(`card${i}-title`).value = card.title || '';
+        document.getElementById(`card${i}-desc`).value = card.description || '';
+        updateImagePreview(`card${i}`, card.bgImage);
+      });
+
+      // Quem Somos
+      document.getElementById('about-tag').value = currentData.about.tag || '';
+      document.getElementById('about-title1').value = currentData.about.titlePart1 || '';
+      document.getElementById('about-title-highlight').value = currentData.about.titleHighlight || '';
+      document.getElementById('about-desc').value = currentData.about.description || '';
+      updateImagePreview('about-img', currentData.about.image);
+
+      currentData.about.checks.forEach((chk, i) => {
+        const el = document.getElementById(`check${i}`);
+        if (el) el.value = chk || '';
+      });
+
+      // Telemetria
+      document.getElementById('feat-tag').value = currentData.feature.tag || '';
+      document.getElementById('feat-title1').value = currentData.feature.titlePart1 || '';
+      document.getElementById('feat-title-highlight').value = currentData.feature.titleHighlight || '';
+      document.getElementById('feat-desc').value = currentData.feature.description || '';
+      document.getElementById('feat-rpm').value = currentData.feature.hudRpm || '2.8k';
+
+      currentData.feature.benefits.forEach((ben, i) => {
+        const el = document.getElementById(`benefit${i}`);
+        if (el) el.value = ben || '';
+      });
+
+      // CTA
+      document.getElementById('cta-tag').value = currentData.cta.tag || '';
+      document.getElementById('cta-title').value = currentData.cta.title || '';
+      document.getElementById('cta-desc').value = currentData.cta.description || '';
+      document.getElementById('cta-btn').value = currentData.cta.buttonText || '';
+
+      // Credenciais (Usuário / Senha)
+      document.getElementById('setting-user').value = getStoredUser();
+      document.getElementById('setting-pass').value = '';
+      document.getElementById('setting-pass-confirm').value = '';
+    }
+
+    // Coleta os dados dos campos
+    function collectFormData() {
+      currentData.general.whatsappNumber = document.getElementById('gen-whatsapp').value.trim();
+      currentData.general.whatsappMessage = document.getElementById('gen-message').value.trim();
+      currentData.general.addressLine1 = document.getElementById('gen-addr1').value.trim();
+      currentData.general.addressLine2 = document.getElementById('gen-addr2').value.trim();
+      currentData.general.hoursWeek = document.getElementById('gen-hours-week').value.trim();
+      currentData.general.hoursSaturday = document.getElementById('gen-hours-sat').value.trim();
+      currentData.general.mapsUrl = document.getElementById('gen-maps').value.trim();
+
+      currentData.hero.titlePart1 = document.getElementById('hero-title1').value.trim();
+      currentData.hero.titleHighlight = document.getElementById('hero-title-highlight').value.trim();
+      currentData.hero.subtitle = document.getElementById('hero-sub').value.trim();
+
+      currentData.services.sectionTag = document.getElementById('serv-tag').value.trim();
+      currentData.services.titlePart1 = document.getElementById('serv-title1').value.trim();
+      currentData.services.titleHighlight = document.getElementById('serv-title-highlight').value.trim();
+      currentData.services.subtitle = document.getElementById('serv-sub').value.trim();
+
+      for (let i = 0; i < 4; i++) {
+        if (!currentData.services.cards[i]) currentData.services.cards[i] = {};
+        currentData.services.cards[i].tag = document.getElementById(`card${i}-tag`).value.trim();
+        currentData.services.cards[i].title = document.getElementById(`card${i}-title`).value.trim();
+        currentData.services.cards[i].description = document.getElementById(`card${i}-desc`).value.trim();
+      }
+
+      currentData.about.tag = document.getElementById('about-tag').value.trim();
+      currentData.about.titlePart1 = document.getElementById('about-title1').value.trim();
+      currentData.about.titleHighlight = document.getElementById('about-title-highlight').value.trim();
+      currentData.about.description = document.getElementById('about-desc').value.trim();
+
+      currentData.about.checks = [
+        document.getElementById('check0').value.trim(),
+        document.getElementById('check1').value.trim(),
+        document.getElementById('check2').value.trim(),
+        document.getElementById('check3').value.trim()
+      ];
+
+      currentData.feature.tag = document.getElementById('feat-tag').value.trim();
+      currentData.feature.titlePart1 = document.getElementById('feat-title1').value.trim();
+      currentData.feature.titleHighlight = document.getElementById('feat-title-highlight').value.trim();
+      currentData.feature.description = document.getElementById('feat-desc').value.trim();
+      currentData.feature.hudRpm = document.getElementById('feat-rpm').value.trim() || '2.8k';
+
+      currentData.feature.benefits = [
+        document.getElementById('benefit0').value.trim(),
+        document.getElementById('benefit1').value.trim(),
+        document.getElementById('benefit2').value.trim()
+      ];
+
+      currentData.cta.tag = document.getElementById('cta-tag').value.trim();
+      currentData.cta.title = document.getElementById('cta-title').value.trim();
+      currentData.cta.description = document.getElementById('cta-desc').value.trim();
+      currentData.cta.buttonText = document.getElementById('cta-btn').value.trim();
+    }
+
+    // Salvar todas as alterações
+    function saveAllChanges() {
+      collectFormData();
+      const success = saveCmsData(currentData);
+      if (success) {
+        showToast('✅ Alterações salvas com sucesso! Já estão ativas no site.');
+      } else {
+        alert('Erro ao salvar os dados. Verifique a memória do navegador.');
+      }
+    }
+
+    // Upload de Imagens com conversão para Data URL (Base64)
+    function handleImageUpload(event, targetType) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (file.size > 2.5 * 1024 * 1024) {
+        alert('A imagem é muito pesada (máximo recomendado: 2.5MB). Otimize a imagem antes de enviar.');
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const dataUrl = e.target.result;
+        if (targetType === 'hero-bg') {
+          currentData.hero.bgImage = dataUrl;
+          updateImagePreview('hero-bg', dataUrl);
+        } else if (targetType === 'about-img') {
+          currentData.about.image = dataUrl;
+          updateImagePreview('about-img', dataUrl);
+        } else if (targetType.startsWith('card')) {
+          const idx = parseInt(targetType.replace('card', ''), 10);
+          if (currentData.services.cards[idx]) {
+            currentData.services.cards[idx].bgImage = dataUrl;
+            updateImagePreview(targetType, dataUrl);
+          }
+        }
+        showToast('📷 Imagem carregada! Clique em "Salvar Alterações" para aplicar.');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function updateImagePreview(targetId, src) {
+      const preview = document.getElementById(`preview-${targetId}`);
+      if (!preview) return;
+
+      if (src) {
+        preview.innerHTML = `<img src="${src}" alt="Preview" />`;
+      } else {
+        preview.innerHTML = `<span class="placeholder">Sem foto</span>`;
+      }
+    }
+
+    function removeCardImage(idx) {
+      if (currentData.services.cards[idx]) {
+        currentData.services.cards[idx].bgImage = '';
+        updateImagePreview(`card${idx}`, '');
+        showToast(`Imagem de fundo do Card ${idx + 1} removida.`);
+      }
+    }
+
+    function restoreDefaultHeroImage() {
+      currentData.hero.bgImage = 'assets/hero-bg.png';
+      updateImagePreview('hero-bg', 'assets/hero-bg.png');
+      showToast('Foto da Ducati restaurada no Hero.');
+    }
+
+    function restoreDefaultAboutImage() {
+      currentData.about.image = 'assets/arte-sobre.png';
+      updateImagePreview('about-img', 'assets/arte-sobre.png');
+      showToast('Arte original de Quem Somos restaurada.');
+    }
+
+    // Exportação e Importação de JSON
+    function exportDataJson() {
+      collectFormData();
+      const blob = new Blob([JSON.stringify(currentData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `backup-polimotos-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importDataJson(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          currentData = deepMerge(JSON.parse(JSON.stringify(DEFAULT_CONTENT)), imported);
+          saveCmsData(currentData);
+          initForm();
+          showToast('Backup importado e aplicado com sucesso!');
+        } catch (err) {
+          alert('Arquivo JSON inválido.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function confirmResetAll() {
+      if (confirm('Tem certeza de que deseja restaurar TODOS os textos e fotos para o padrão original da oficina?')) {
+        currentData = resetCmsData();
+        initForm();
+        showToast('Todos os padrões originais foram restaurados.');
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const msgEl = document.getElementById('toast-msg');
+      msgEl.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => { toast.classList.remove('show'); }, 3500);
+    }
+
+    // Inicia verificação de login
+    checkAuth();
+  </script>
+</body>
+</html>

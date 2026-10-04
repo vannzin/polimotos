@@ -1,0 +1,5 @@
+# Netlify redirects file
+/painel       /painel.html   200
+/admin        /painel.html   200
+/admin.html   /painel.html   301
+/404          /404.html      404
